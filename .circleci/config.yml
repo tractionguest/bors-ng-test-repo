@@ -8,9 +8,6 @@ jobs:
           BUNDLE_PATH: "vendor/bundle"
     steps:
       - checkout # special step to check out source code to working directory
-      - run: 
-          name: Install system-level dependencies
-          command: sudo apt install libsodium-dev
 
       # Which version of bundler?
       - run:
@@ -29,24 +26,12 @@ jobs:
           key: rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
           paths:
             - vendor/bundle
-
-      - run:
-          name: Wait for DB
-          command: dockerize -wait tcp://localhost:5432 -timeout 1m
-      
-      - run:
-          name: Wait for Redis
-          command: dockerize -wait tcp://localhost:6379 -timeout 1m
-
       - run:
           name: Database setup
           command: bin/rake db:schema:load --trace
 
       - run: |
-          bundle exec rspec --profile 10 \
-                            --format RspecJunitFormatter \
-                            --out test_results/rspec.xml \
-                            --format progress
+          bundle exec rspec 
       - store_test_results:
           path: test_results
 
