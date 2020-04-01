@@ -9,6 +9,9 @@ jobs:
     steps:
       - checkout # special step to check out source code to working directory
 
+      - run:
+          name: Install bundler
+          command: gem install bundler:2.1.2
       # Which version of bundler?
       - run:
           name: Which bundler?
