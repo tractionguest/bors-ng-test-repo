@@ -60,9 +60,8 @@ workflows:
       - rspec:
           filters:
             branches:
-              only: 
-                - staging
-                - trying
+              except: 
+                - /.*\.tmp$/
       # - publish:
       #     requires:
       #       - test
