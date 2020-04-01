@@ -1,0 +1,72 @@
+version: 2.1
+
+jobs:
+  rspec:
+    docker:
+      - image: circleci/ruby:2.6.3-buster-node
+        environment: 
+          BUNDLE_PATH: "vendor/bundle"
+    steps:
+      - checkout # special step to check out source code to working directory
+      - run: 
+          name: Install system-level dependencies
+          command: sudo apt install libsodium-dev
+
+      # Which version of bundler?
+      - run:
+          name: Which bundler?
+          command: bundle -v
+
+      # Restore bundle cache
+      - restore_cache:
+          keys:
+            - rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Bundle Install
+          command: bundle check --path vendor/bundle || bundle install --deployment
+      # Store bundle cache
+      - save_cache:
+          key: rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+
+      - run:
+          name: Wait for DB
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      
+      - run:
+          name: Wait for Redis
+          command: dockerize -wait tcp://localhost:6379 -timeout 1m
+
+      - run:
+          name: Database setup
+          command: bin/rake db:schema:load --trace
+
+      - run: |
+          bundle exec rspec --profile 10 \
+                            --format RspecJunitFormatter \
+                            --out test_results/rspec.xml \
+                            --format progress
+      - store_test_results:
+          path: test_results
+
+
+orbs:
+  heroku: circleci/heroku@1.0.1
+
+workflows:
+  build-deploy:
+    jobs:
+      - rspec:
+          filters:
+            branches:
+              only: 
+                - staging
+                - trying
+      # - publish:
+      #     requires:
+      #       - test
+      #     # only publish site changes on 'merge'
+      #     filters:
+      #       branches:
+      #         only: staging
