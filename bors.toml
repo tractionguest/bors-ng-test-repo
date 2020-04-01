@@ -1,4 +1,4 @@
+#CircleCI using GitHub Checks
 status = [
-  "ci/circleci: rspec"
-  
+  "build-deploy" 
 ]
