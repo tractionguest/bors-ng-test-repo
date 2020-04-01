@@ -38,7 +38,6 @@ jobs:
       - store_test_results:
           path: test_results
 
-
   publish:
     docker:
       - image: circleci/ruby:2.6.3-buster-node
@@ -67,7 +66,12 @@ orbs:
 workflows:
   build-deploy:
     jobs:
-      - rspec
+      - rspec:
+          filters:
+            branches:
+              only: 
+                - staging
+                - trying
       - publish:
           requires:
             - rspec
