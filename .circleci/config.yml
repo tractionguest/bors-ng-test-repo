@@ -60,7 +60,7 @@ workflows:
       - rspec:
           filters:
             branches:
-              except: 
+              ignore: 
                 - /.*\.tmp$/
       # - publish:
       #     requires:
