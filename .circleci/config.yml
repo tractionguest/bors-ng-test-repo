@@ -67,11 +67,7 @@ orbs:
 workflows:
   build-deploy:
     jobs:
-      - rspec:
-          filters:
-            branches:
-              ignore: 
-                - /.*\.tmp$/
+      - rspec
       - publish:
           requires:
             - rspec
