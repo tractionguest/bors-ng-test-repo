@@ -1,0 +1,81 @@
+version: 2.1
+
+jobs:
+  rspec:
+    docker:
+      - image: circleci/ruby:2.6.3-buster-node
+        environment: 
+          BUNDLE_PATH: "vendor/bundle"
+    steps:
+      - checkout # special step to check out source code to working directory
+
+      - run:
+          name: Install bundler
+          command: gem install bundler:2.1.2
+      # Which version of bundler?
+      - run:
+          name: Which bundler?
+          command: bundle -v
+
+      # Restore bundle cache
+      - restore_cache:
+          keys:
+            - rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Bundle Install
+          command: bundle check --path vendor/bundle || bundle install --deployment
+      # Store bundle cache
+      - save_cache:
+          key: rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+      - run:
+          name: Database setup
+          command: bin/rake db:schema:load --trace
+
+      - run: |
+          bundle exec rspec 
+      - store_test_results:
+          path: test_results
+
+  publish:
+    docker:
+      - image: circleci/ruby:2.6.3-buster-node
+        environment: 
+          BUNDLE_PATH: "vendor/bundle"
+    steps:
+      - checkout # special step to check out source code to working directory
+
+      - run:
+          name: Deploying to heroku
+          command: gem install bundler:2.1.2
+      - restore_cache:
+          keys:
+            - rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Bundle Install
+          command: bundle check --path vendor/bundle || bundle install --deployment
+      - save_cache:
+          key: rails-demo-bundle-v2-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+
+orbs:
+  heroku: circleci/heroku@1.0.1
+
+workflows:
+  build-deploy:
+    jobs:
+      - rspec:
+          filters:
+            branches:
+              only: 
+                - staging
+                - trying
+      - publish:
+          requires:
+            - rspec
+          # only publish site changes on 'merge'
+          filters:
+            branches:
+              only: staging

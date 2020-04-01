@@ -1,0 +1,5 @@
+status = [
+  "ci/circleci: rspec"
+  
+]
+timeout_sec = 360
